@@ -59,6 +59,6 @@ def handle_messages(message):
         bot.reply_to(message, "Please send a valid YouTube link!")
 
 # 3. Start the bot
-if name == "main":
+if __name__ == "main":
     print("Bot is running...")
     bot.infinity_polling()
