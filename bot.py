@@ -6,7 +6,6 @@ def download_from_url(url):
     # This adds a random 3-7 second delay before starting
     # It stops YouTube from seeing a "pattern" of bot activity
     time.sleep(random.randint(3, 7))
-
     ydl_opts = {
         'format': 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best',
         'outtmpl': 'video_720p.%(ext)s',
@@ -26,7 +25,6 @@ def download_from_url(url):
             'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
         }
     }
-    
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         return ydl.prepare_filename(info)
