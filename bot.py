@@ -30,8 +30,6 @@ def download_from_url(url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         return ydl.prepare_filename(info)
-    import os
-import telebot
 
 # 1. Initialize the bot using the Environment Variable
 TOKEN = os.getenv('BOT_TOKEN') 
