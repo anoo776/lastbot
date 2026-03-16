@@ -17,16 +17,23 @@ def download_video(url):
             f.write(cookies_content)
 
     ydl_opts = {
-        'format': 'best[ext=mp4]',
-        'cookiefile': cookie_path,
-        'outtmpl': 'downloaded_video.mp4',
-        'quiet': True,
+        # This says: "Try best MP4 video + M4A audio, otherwise just get the best single file"
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        'cookiefile': 'cookies.txt',
+        'outtmpl': 'video_%(id)s.%(ext)s',
         'nocheckcertificate': True,
+        'quiet': False, # Leave this False so you can see details in Railway logs
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['ios', 'mweb'],
+                'po_token': ['web+password'],
+            }
+        }
     }
-
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-        return "downloaded_video.mp4"
+        info = ydl.extract_info(url, download=True)
+        filename = ydl.prepare_filename(info)
+        return filename
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
