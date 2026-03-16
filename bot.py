@@ -48,7 +48,7 @@ def download_video(url, format_id):
 
     ydl_opts = {
         # Uses the specific format_id from the button click
-        'format': f'{format_id}+bestaudio[ext=m4a]/best',
+        'format': f'{format_id}/best',
         'cookiefile': 'cookies.txt',
         'outtmpl': 'video_%(id)s.%(ext)s',
         'nocheckcertificate': True,
