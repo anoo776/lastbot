@@ -26,6 +26,7 @@ def download_from_url(url):
             'youtube': {
                 # We prioritize 'ios' because it is the most stable bypass in 2026
                 'player_client': ['ios', 'mweb'],
+                'po_token': ['web+password'], 
             }
         },
         # These help bypass basic Cloudflare/Google bot checks
