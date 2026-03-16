@@ -1,118 +1,92 @@
 import os
 import time
 import telebot
-import yt_dlp
+import requests
 from telebot import types
 
-# 1. Configuration - Get your Bot Token from Railway Environment Variables
+# Configuration
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
-def get_available_qualities(url):
-    """Fetches available resolutions without downloading."""
-    ydl_opts = {
-        'cookiefile': 'cookies.txt',
-        'nocheckcertificate': True,
-        'quiet': True,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['android', 'web'],
-            }
-        }
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=False)
-        formats = info.get('formats', [])
-        
-        # Filter for mp4 formats with video and audio
-        available = []
-        seen_heights = set()
-        for f in formats:
-            height = f.get('height')
-            # We look for standard qualities and avoid duplicates
-            if height and height >= 144 and height not in seen_heights:
-                available.append({'height': height, 'format_id': f['format_id']})
-                seen_heights.add(height)
-        
-        # Sort by height (highest quality first)
-        return sorted(available, key=lambda x: x['height'], reverse=True), info.get('id')
+# Cobalt API settings
+COBALT_API = "https://api.cobalt.tools/api/json"
 
-def download_video(url, format_id):
-    """Downloads the specific format chosen by the user."""
-    cookie_path = "cookies.txt"
-    cookies_content = os.getenv("COOKIES")
+def get_video_via_cobalt(url, quality="720"):
+    """Requests a direct download link from Cobalt."""
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+    # Cobalt uses specific strings for quality: "360", "720", "1080", etc.
+    payload = {
+        "url": url,
+        "videoQuality": str(quality),
+        "downloadMode": "video",
+        "filenameStyle": "pretty"
+    }
     
-    if cookies_content:
-        with open(cookie_path, "w") as f:
-            f.write(cookies_content)
-
-    ydl_opts = {
-        # Uses the specific format_id from the button click
-        'format': f'{format_id}+bestaudio[ext=m4a]/best',
-        'cookiefile': 'cookies.txt',
-        'outtmpl': 'video_%(id)s.%(ext)s',
-        'nocheckcertificate': True,
-        'merge_output_format': 'mp4',
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['ios', 'mweb'],
-                'po_token': ['web+password'],
-            }
-        }
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        return ydl.prepare_filename(info)
+    try:
+        response = requests.post(COBALT_API, json=payload, headers=headers)
+        data = response.json()
+        
+        # Cobalt returns 'stream' or 'redirect' if successful
+        if data.get('status') in ['stream', 'redirect', 'success']:
+            video_url = data.get('url')
+            
+            # Download the actual file to Railway temporarily
+            file_name = f"video_{int(time.time())}.mp4"
+            r = requests.get(video_url, stream=True)
+            with open(file_name, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            return file_name
+        else:
+            print(f"Cobalt error: {data.get('text')}")
+            return None
+    except Exception as e:
+        print(f"Request failed: {e}")
+        return None
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    bot.reply_to(message, "Bot is awake! Send me a YouTube link and I'll ask for the quality.")
+    bot.reply_to(message, "Cobalt Bot Active! 🚀 Send me any link (YouTube, TikTok, Instagram).")
 
-@bot.message_handler(func=lambda m: "youtube.com" in m.text or "youtu.be" in m.text)
-def handle_video_link(message):
-    try:
-        url = message.text.strip()
-        bot.reply_to(message, "Fetching available qualities...")
-        
-        qualities, video_id = get_available_qualities(url)
-        
-        if not qualities:
-            bot.reply_to(message, "Could not find any standard qualities for this video.")
-            return
-
-        # Create buttons
-        markup = types.InlineKeyboardMarkup()
-        for q in qualities[:5]: # Show top 5 qualities to keep it clean
-            # We store the format_id and the URL in the callback data
-            # Format: "dl|[format_id]|[url]"
-            callback_data = f"dl|{q['format_id']}|{url}"
-            btn = types.InlineKeyboardButton(text=f"🎬 {q['height']}p", callback_data=callback_data)
-            markup.add(btn)
-            
-        bot.send_message(message.chat.id, "Select your preferred quality:", reply_markup=markup)
-        
-    except Exception as e:
-        bot.reply_to(message, f"Error fetching qualities: {str(e)}")
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith('dl|'))
-def process_download_selection(call):
-    # Extract data from the callback
-     format_id, url = call.data.split('|',2)
+@bot.message_handler(func=lambda m: "http" in m.text)
+def handle_link(message):
+    url = message.text.strip()
     
-     bot.edit_message_text("Downloading selected quality... please wait.", call.message.chat.id, call.message.message_id)
-     try:
-        # This calls your download function
-        file_path = download_video(url, format_id)
-        
-        with open(file_path, 'rb') as video:
-            bot.send_video(call.message.chat.id, video)
-            
-        os.remove(file_path) # Important! Cleanup the file
-        bot.delete_message(call.message.chat.id, call.message.message_id) # Remove the "Downloading" text
-        
-     except Exception as e:
-        bot.send_message(call.message.chat.id, f"Download failed: {str(e)}")
+    # Create Quality Buttons
+    markup = types.InlineKeyboardMarkup()
+    # Cobalt supports these specific qualities
+    qualities = ["360", "480", "720", "1080"]
     
-if __name__ == "__main__":
-      print("--- BOT STARTED SUCCESSFULLY ---")
-      bot.infinity_polling()  
+    for q in qualities:
+        # data format: "cb|[quality]|[url]"
+        callback_data = f"cb|{q}|{url}"
+        markup.add(types.InlineKeyboardButton(text=f"🎬 {q}p", callback_data=callback_data))
+        
+    bot.send_message(message.chat.id, "Select Quality:", reply_markup=markup)
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('cb|'))
+def process_cobalt_download(call):
+    bot.answer_callback_query(call.id, "Processing...")
+    _, quality, url = call.data.split('|', 2)
+    
+    bot.edit_message_text(f"Downloading {quality}p... please wait ⏳", call.message.chat.id, call.message.message_id)
+    
+    file_path = get_video_via_cobalt(url, quality)
+    
+    if file_path and os.path.exists(file_path):
+        try:
+            with open(file_path, 'rb') as video:
+                bot.send_video(call.message.chat.id, video)
+            os.remove(file_path) # Cleanup
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except Exception as e:
+            bot.send_message(call.message.chat.id, f"Failed to send video: {e}")
+    else:
+        bot.edit_message_text("❌ Cobalt couldn't process this link. It might be private or blocked.", call.message.chat.id, call.message.message_id)
+
+if name == "main":
+    print("--- COBALT BOT STARTED ---")
+    bot.infinity_polling()
