@@ -40,4 +40,11 @@ def download_from_url(url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         return ydl.prepare_filename(info)
+    if name == "main":
+     print("--- BOT STARTED SUCCESSFULLY ---")
+    try:
+        bot.infinity_polling()
+    except Exception as e:
+        print(f"Polling crashed: {e}")
+        time.sleep(5)
     
