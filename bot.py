@@ -48,7 +48,7 @@ def download_video(url, format_id):
 
     ydl_opts = {
         # Uses the specific format_id from the button click
-        'format': f'{format_id}/best',
+        'format': f'{format_id}+bestaudio[ext=m4a]/best',
         'cookiefile': 'cookies.txt',
         'outtmpl': 'video_%(id)s.%(ext)s',
         'nocheckcertificate': True,
@@ -97,7 +97,7 @@ def handle_video_link(message):
 @bot.callback_query_handler(func=lambda call: call.data.startswith('dl|'))
 def process_download_selection(call):
     # Extract data from the callback
-     format_id, url = call.data.split('|')
+     format_id, url = call.data.split('|',2)
     
      bot.edit_message_text("Downloading selected quality... please wait.", call.message.chat.id, call.message.message_id)
      try:
