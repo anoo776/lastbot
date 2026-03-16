@@ -16,7 +16,7 @@ def get_available_qualities(url):
         'quiet': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['ios', 'mweb'],
+                'player_client': ['android', 'web'],
             }
         }
     }
