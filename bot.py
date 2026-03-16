@@ -101,6 +101,7 @@ def process_download_selection(call):
     _, format_id, url = call.data.split('|')
     
     bot.edit_message_text("Downloading selected quality... please wait.", call.message.chat.id, call.message.message_id)
-    if __name__ == "__main__":
+    
+if __name__ == "__main__":
       print("--- BOT STARTED SUCCESSFULLY ---")
-    bot.infinity_polling()  
+      bot.infinity_polling()  
