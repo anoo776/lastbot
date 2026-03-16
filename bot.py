@@ -17,7 +17,6 @@ def get_available_qualities(url):
         'extractor_args': {
             'youtube': {
                 'player_client': ['ios', 'mweb'],
-                'po_token': ['web+password'],
             }
         }
     }
