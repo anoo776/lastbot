@@ -50,6 +50,6 @@ def handle_messages(message):
             print(f"❌ Download Error: {str(e)}")
             bot.reply_to(message, f"❌ Error: {str(e)}")
 
-if __name__ == "main":
+if __name__ == "__main__":
     print("🚀 BOT IS OFFICIALLY ALIVE AND POLLING...")
     bot.infinity_polling()
