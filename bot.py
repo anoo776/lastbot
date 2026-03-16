@@ -87,6 +87,6 @@ def process_cobalt_download(call):
     else:
         bot.edit_message_text("❌ Cobalt couldn't process this link. It might be private or blocked.", call.message.chat.id, call.message.message_id)
 
-if name == "main":
+if __name__ == "__main__":
     print("--- COBALT BOT STARTED ---")
     bot.infinity_polling()
