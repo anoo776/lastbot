@@ -98,9 +98,9 @@ def handle_video_link(message):
 @bot.callback_query_handler(func=lambda call: call.data.startswith('dl|'))
 def process_download_selection(call):
     # Extract data from the callback
-    _, format_id, url = call.data.split('|')
+     format_id, url = call.data.split('|')
     
-    bot.edit_message_text("Downloading selected quality... please wait.", call.message.chat.id, call.message.message_id)
+     bot.edit_message_text("Downloading selected quality... please wait.", call.message.chat.id, call.message.message_id)
     
 if __name__ == "__main__":
       print("--- BOT STARTED SUCCESSFULLY ---")
