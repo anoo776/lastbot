@@ -100,6 +100,18 @@ def process_download_selection(call):
      format_id, url = call.data.split('|')
     
      bot.edit_message_text("Downloading selected quality... please wait.", call.message.chat.id, call.message.message_id)
+     try:
+        # This calls your download function
+        file_path = download_video(url, format_id)
+        
+        with open(file_path, 'rb') as video:
+            bot.send_video(call.message.chat.id, video)
+            
+        os.remove(file_path) # Important! Cleanup the file
+        bot.delete_message(call.message.chat.id, call.message.message_id) # Remove the "Downloading" text
+        
+     except Exception as e:
+        bot.send_message(call.message.chat.id, f"Download failed: {str(e)}")
     
 if __name__ == "__main__":
       print("--- BOT STARTED SUCCESSFULLY ---")
