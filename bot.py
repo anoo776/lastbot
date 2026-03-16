@@ -9,7 +9,7 @@ TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
 # Cobalt API settings
-COBALT_API = "https://api.cobalt.tools/api/json"
+COBALT_API = "https://cobalt.canine.tools/"
 
 def get_video_via_cobalt(url, quality="720"):
     """Requests a direct download link from Cobalt."""
