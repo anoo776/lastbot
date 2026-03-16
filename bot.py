@@ -19,7 +19,7 @@ def download_from_url(url):
         'quiet': False, # Changed to False so we can see what YouTube is doing
         'no_warnings': False,
         'nocheckcertificate': True,
-        'extractor_args': {'youtube': {'player_client': ['android']}},
+        'extractor_args': {'youtube': {'player_client': ['ios']}},
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
